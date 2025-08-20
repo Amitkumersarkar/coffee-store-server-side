@@ -38,6 +38,20 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
+        // put method
+        app.put('/coffee/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updatedCoffee = req.body;
+            const coffee = {
+                $set: {
+                    name: updatedCoffee.name, quantity: updatedCoffee.quantity, photo: updatedCoffee.photo, category: updatedCoffee.category, details: updatedCoffee.details, chef: updatedCoffee.chef, taste: updatedCoffee.taste, supplier: updatedCoffee.supplier
+                }
+            }
+            const result = await coffeeCollection.updateOne(filter, coffee, options);
+            res.send(result);
+        })
         // update method
         app.get('/coffee/:id', async (req, res) => {
             const id = req.params.id;
