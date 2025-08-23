@@ -2,22 +2,16 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const app = express();
 const port = process.env.PORT || 5500;
 
-// middleware
+// Middleware
 app.use(cors());
-app.use(express.json())
+app.use(express.json());
 
-// mongodb database
-// console.log(process.env.DB_USER)
-// console.log(process.env.DB_PASS)
-
-// mongodb connection from here
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xqgbxlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-console.log(uri)
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// MongoDB connection
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xqgbxlh.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -28,71 +22,82 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-        const coffeeCollection = client.db('coffeeDB').collection('coffee');
 
-        // get configuration of client side read data
+        // Collections
+        const coffeeCollection = client.db('coffeeDB').collection('coffee');
+        const userCollection = client.db('coffeeDB').collection('users');
+
+        // Coffee Routes
         app.get('/coffee', async (req, res) => {
-            const cursor = coffeeCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        })
-        // put method
-        app.put('/coffee/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) }
-            const options = { upsert: true };
-            const updatedCoffee = req.body;
-            const coffee = {
-                $set: {
-                    name: updatedCoffee.name, quantity: updatedCoffee.quantity, photo: updatedCoffee.photo, category: updatedCoffee.category, details: updatedCoffee.details, chef: updatedCoffee.chef, taste: updatedCoffee.taste, supplier: updatedCoffee.supplier
-                }
-            }
-            const result = await coffeeCollection.updateOne(filter, coffee, options);
-            res.send(result);
-        })
-        // update method
+            const coffees = await coffeeCollection.find().toArray();
+            res.send(coffees);
+        });
+
         app.get('/coffee/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await coffeeCollection.findOne(query);
-            res.send(result);
-        })
-        // connection client side data into server side by post operation
+            const coffee = await coffeeCollection.findOne({ _id: new ObjectId(id) });
+            res.send(coffee);
+        });
+
         app.post('/coffee', async (req, res) => {
             const newCoffee = req.body;
-            console.log(newCoffee);
             const result = await coffeeCollection.insertOne(newCoffee);
             res.send(result);
-        })
+        });
 
-        // delete operations
+        app.put('/coffee/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedCoffee = req.body;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: updatedCoffee.name,
+                    quantity: updatedCoffee.quantity,
+                    photo: updatedCoffee.photo,
+                    category: updatedCoffee.category,
+                    details: updatedCoffee.details,
+                    chef: updatedCoffee.chef,
+                    taste: updatedCoffee.taste,
+                    supplier: updatedCoffee.supplier,
+                }
+            };
+            const result = await coffeeCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+
         app.delete('/coffee/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {
-                _id: new ObjectId(id)
-            }
-            const result = await coffeeCollection.deleteOne(query);
+            const result = await coffeeCollection.deleteOne({ _id: new ObjectId(id) });
             res.send(result);
-        })
+        });
 
-        // Send a ping to confirm a successful connection
+        // Users Route
+        app.post('/users', async (req, res) => {
+            const newUser = req.body;
+            console.log('Creating new user:', newUser);
+            const result = await userCollection.insertOne(newUser);
+            res.send(result);
+        });
+
+        // Test MongoDB connection
         await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        console.log("Successfully connected to MongoDB!");
     } finally {
-        // Ensures that the client will close when you finish/error
+        // Uncomment if you want to close connection after running
         // await client.close();
     }
 }
+
 run().catch(console.dir);
 
-//end here
-// for root to check server connection
+// Root route
 app.get('/', (req, res) => {
-    res.send('coffee making server is running')
-})
+    res.send('Coffee making server is running');
+});
 
+// Start server
 app.listen(port, () => {
-    console.log(`coffee server is running on port : ${port}`)
-})
+    console.log(`Server is running on port: ${port}`);
+});
