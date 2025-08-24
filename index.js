@@ -72,6 +72,12 @@ async function run() {
             const result = await coffeeCollection.deleteOne({ _id: new ObjectId(id) });
             res.send(result);
         });
+        // users relate apis
+        app.get('/users', async (req, res) => {
+            const cursor = userCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
         // Users Route
         app.post('/users', async (req, res) => {
@@ -81,9 +87,17 @@ async function run() {
             res.send(result);
         });
 
+        // delete users operation
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        })
         // Test MongoDB connection
         await client.db("admin").command({ ping: 1 });
         console.log("Successfully connected to MongoDB!");
+
     } finally {
         // Uncomment if you want to close connection after running
         // await client.close();
