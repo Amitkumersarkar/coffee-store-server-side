@@ -5,21 +5,17 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5500;
+// middleware
+// app.use(cors());
+// app.use(express.json())
 
-// app.use(cors({
-//     origin: [
-//         "http://localhost:5173",
-//         "https://coffee-store-c409e.web.app"
-//     ],
-//     credentials: true,
-// }));
 app.use(cors({
-    origin: "*", // temporary, allows all
-    credentials: true
+    origin: [
+        "http://localhost:5173",
+        "https://coffee-store-c409e.web.app"
+    ],
+    credentials: true,
 }));
-
-
-app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xqgbxlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 const client = new MongoClient(uri, {
